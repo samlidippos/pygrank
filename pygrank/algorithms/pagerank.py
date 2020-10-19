@@ -29,12 +29,12 @@ class PageRank:
         self.convergence = pygrank.algorithms.utils.ConvergenceManager(**kwargs) if convergence is None else convergence
         self.use_quotient = use_quotient
 
-    def rank(self, G, personalization=None, warm_start=None):
+    def rank(self, G, personalization=None, warm_start=None, return_last_ranking=False):
         M = self.to_scipy(G)
         degrees = scipy.array(M.sum(axis=1)).flatten()
 
         personalization = scipy.repeat(1.0, len(G)) if personalization is None else scipy.array([personalization.get(n, 0) for n in G], dtype=float)
-        personalization = personalization / personalization.sum()
+#        personalization = personalization / personalization.sum()
         ranks = personalization if warm_start is None else scipy.array([warm_start.get(n, 0) for n in G], dtype=float)
 
         is_dangling = scipy.where(degrees == 0)[0]
@@ -45,7 +45,10 @@ class PageRank:
                 ranks = ranks/ranks.sum()
 
         ranks = dict(zip(G.nodes(), map(float, ranks)))
-        return ranks
+        return_values = ranks
+        if return_last_ranking:
+            return_values = ranks, dict(zip(G.nodes(), map(float, self.convergence.last_ranks)))
+        return return_values
 
 
 class HeatKernel:
